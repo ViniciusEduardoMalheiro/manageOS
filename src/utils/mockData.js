@@ -14,7 +14,8 @@ export const mockOrders = [
     address: 'Av. Principal, 456',
     phone: '(21) 91234-5678',
     status: 'Em Execução',
-    employee: 'João Pereira'
+    employee: 'João Pereira',
+    location: { lat: -23.5505, lng: -46.6333 }, // São Paulo
   },
   {
     id: 3,
@@ -40,6 +41,7 @@ export const mockOrders = [
     address: 'Rua da Paz, 202',
     phone: '(51) 97777-6666',
     status: 'Em Execução',
-    employee: 'Lucas Martins'
+    employee: 'Lucas Martins',
+    location: { lat: -30.0346, lng: -51.2177 }, // Porto Alegre
   },
 ]; 

@@ -20,8 +20,7 @@ const SidebarLink = ({ to, children }) => {
 };
 
 const Sidebar = () => {
-  const { logout } = useAuth();
-  const { user } = useAuth();
+  const { logout, user } = useAuth();
 
   return (
     <aside className="w-64 h-screen bg-sidebar-background text-sidebar-foreground flex flex-col border-r border-sidebar-border shadow-soft">
@@ -33,6 +32,9 @@ const Sidebar = () => {
       <nav className="flex-1 p-4 space-y-2">
         <SidebarLink to="/">Dashboard</SidebarLink>
         <SidebarLink to="/employees">Funcionários</SidebarLink>
+        {user?.role === 'Administrador' && (
+          <SidebarLink to="/monitoring">Monitoramento</SidebarLink>
+        )}
       </nav>
       <div className="p-4 border-t border-sidebar-border">
         <div className="mb-4">
