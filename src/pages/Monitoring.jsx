@@ -1,11 +1,10 @@
-import React, { useMemo, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import { mockOrders } from '../utils/mockData';
+import React, { useMemo, useEffect, useState } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { useOrders } from '../context/OrderContext';
+import { useAuth } from '../context/AuthContext';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import EmployeeStatusCard from '../components/EmployeeStatusCard';
-import { useState } from 'react';
-import { useMap } from 'react-leaflet';
 
 // Corrige o problema do ícone padrão do Leaflet não aparecer
 delete L.Icon.Default.prototype._getIconUrl;
@@ -27,10 +26,15 @@ const MapFlyToController = ({ position }) => {
 };
 
 const Monitoring = () => {
-  const trackedOrders = useMemo(() => 
-    mockOrders.filter(order => order.status === 'Em Execução' && order.location)
-  , []);
+  const { orders } = useOrders();
+  const { users } = useAuth();
   const [selectedPosition, setSelectedPosition] = useState(null);
+
+  const getUserById = (id) => users.find(u => u.id === id);
+
+  const trackedOrders = useMemo(() => 
+    orders.filter(order => order.status === 'Em Execução' && order.location)
+  , [orders]);
 
   return (
     <>
@@ -39,13 +43,17 @@ const Monitoring = () => {
         {/* Coluna da Lista de Funcionários */}
         <div className="lg:w-1/3 h-full overflow-y-auto pr-2 space-y-4">
             {trackedOrders.length > 0 ? (
-                trackedOrders.map(order => (
-                    <EmployeeStatusCard 
-                        key={order.id} 
-                        order={order}
-                        onFocus={() => setSelectedPosition([order.location.lat, order.location.lng])}
-                    />
-                ))
+                trackedOrders.map(order => {
+                    const employee = getUserById(order.employeeId);
+                    return (
+                        <EmployeeStatusCard 
+                            key={order.id} 
+                            order={order}
+                            employeeName={employee ? employee.name : 'Desconhecido'}
+                            onFocus={() => setSelectedPosition([order.location.lat, order.location.lng])}
+                        />
+                    )
+                })
             ) : (
                 <div className="text-center text-muted-foreground mt-10">
                     <p>Nenhum técnico em campo no momento.</p>
@@ -66,7 +74,7 @@ const Monitoring = () => {
                   <div className="font-sans">
                     <h3 className="font-bold text-base mb-1">{order.title}</h3>
                     <p><span className="font-semibold">Cliente:</span> {order.client}</p>
-                    <p><span className="font-semibold">Técnico:</span> {order.employee}</p>
+                    <p><span className="font-semibold">Técnico:</span> {getUserById(order.employeeId)?.name || 'N/A'}</p>
                   </div>
                 </Popup>
               </Marker>

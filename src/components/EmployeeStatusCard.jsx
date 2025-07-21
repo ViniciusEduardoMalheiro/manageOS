@@ -2,12 +2,12 @@ import React from 'react';
 import Card from './Card';
 import Button from './Button';
 
-const EmployeeStatusCard = ({ order, onFocus }) => {
+const EmployeeStatusCard = ({ order, employeeName, onFocus }) => {
   return (
     <Card className="animate-fade-in-up !p-4">
       <div className="flex justify-between items-start">
         <div>
-          <p className="font-bold text-lg text-foreground">{order.employee}</p>
+          <p className="font-bold text-lg text-foreground">{employeeName}</p>
           <p className="text-sm text-muted-foreground">Em serviço</p>
         </div>
         <div className="text-right">

@@ -1,7 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import Card from '../components/Card';
 import Button from '../components/Button';
-import { mockOrders } from '../utils/mockData';
+import OrderDetailsModal from '../components/OrderDetailsModal';
+import CreateOrderModal from '../components/CreateOrderModal';
+import AssignEmployeeModal from '../components/AssignEmployeeModal'; // Importa o novo modal
+import DropdownMenu, { DropdownMenuItem } from '../components/DropdownMenu';
+import { useOrders } from '../context/OrderContext';
+import { useAuth } from '../context/AuthContext';
 
 const StatusBadge = ({ status }) => {
   const baseClasses = 'px-2.5 py-0.5 text-xs font-semibold rounded-full';
@@ -13,26 +18,77 @@ const StatusBadge = ({ status }) => {
   return <span className={`${baseClasses} ${statusClasses[status]}`}>{status}</span>;
 };
 
+const OrderActions = ({ order, onDetailsClick, onAssignClick }) => {
+    const { finalizeOrder } = useOrders();
+
+    return (
+        <DropdownMenu
+            trigger={
+                <Button variant="ghost">
+                    Ações <span className="text-xs">▼</span>
+                </Button>
+            }
+        >
+            <DropdownMenuItem onClick={onDetailsClick}>
+                Ver Detalhes
+            </DropdownMenuItem>
+
+            {order.status === 'Iniciada' && (
+                <DropdownMenuItem onClick={onAssignClick}>
+                    Atribuir e Iniciar O.S.
+                </DropdownMenuItem>
+            )}
+
+            {order.status === 'Em Execução' && (
+                <DropdownMenuItem onClick={() => finalizeOrder(order.id)}>
+                    Finalizar O.S.
+                </DropdownMenuItem>
+            )}
+        </DropdownMenu>
+    );
+};
+
+
 const Dashboard = () => {
+  const { orders } = useOrders(); // Usa o contexto
+  const { users } = useAuth(); // Pega a lista de todos os usuários
   const [filter, setFilter] = useState('Todos');
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false); // Novo estado
+  const [selectedOrder, setSelectedOrder] = useState(null);
+
+  const handleOpenDetails = (order) => {
+    setSelectedOrder(order);
+    setIsDetailsModalOpen(true);
+  };
+
+  const handleOpenAssign = (order) => { // Nova função
+    setSelectedOrder(order);
+    setIsAssignModalOpen(true);
+  };
+
+  const getUserNameById = (id) => {
+    const user = users.find(u => u.id === id);
+    return user ? user.name : 'N/A';
+  };
 
   const filteredOrders = useMemo(() => {
-    if (filter === 'Todos') return mockOrders;
-    return mockOrders.filter((order) => order.status === filter);
-  }, [filter]);
+    if (filter === 'Todos') return orders;
+    return orders.filter((order) => order.status === filter);
+  }, [filter, orders]);
 
   const stats = useMemo(() => ({
-    iniciada: mockOrders.filter(o => o.status === 'Iniciada').length,
-    emExecucao: mockOrders.filter(o => o.status === 'Em Execução').length,
-    finalizada: mockOrders.filter(o => o.status === 'Finalizada').length,
-  }), []);
-
+    iniciada: orders.filter(o => o.status === 'Iniciada').length,
+    emExecucao: orders.filter(o => o.status === 'Em Execução').length,
+    finalizada: orders.filter(o => o.status === 'Finalizada').length,
+  }), [orders]);
 
   return (
     <>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-        <Button variant="primary">Criar Nova O.S</Button>
+        <Button variant="primary" onClick={() => setIsCreateModalOpen(true)}>Criar Nova O.S</Button>
       </div>
 
       {/* Stats Cards */}
@@ -70,6 +126,7 @@ const Dashboard = () => {
                 <th scope="col" className="px-6 py-3">Cliente</th>
                 <th scope="col" className="px-6 py-3">Status</th>
                 <th scope="col" className="px-6 py-3">Responsável</th>
+                <th scope="col" className="px-6 py-3 text-right">Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -78,13 +135,36 @@ const Dashboard = () => {
                   <td className="px-6 py-4 font-medium text-foreground">{order.title}</td>
                   <td className="px-6 py-4">{order.client}</td>
                   <td className="px-6 py-4"><StatusBadge status={order.status} /></td>
-                  <td className="px-6 py-4">{order.employee || 'N/A'}</td>
+                  <td className="px-6 py-4">{getUserNameById(order.employeeId)}</td>
+                  <td className="px-6 py-4 text-right">
+                    <OrderActions 
+                        order={order} 
+                        onDetailsClick={() => handleOpenDetails(order)}
+                        onAssignClick={() => handleOpenAssign(order)} // Passa a nova função
+                    />
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </Card>
+
+      {/* Modais */}
+      <OrderDetailsModal 
+        isOpen={isDetailsModalOpen} 
+        onClose={() => setIsDetailsModalOpen(false)} 
+        order={selectedOrder} 
+      />
+      <CreateOrderModal 
+        isOpen={isCreateModalOpen} 
+        onClose={() => setIsCreateModalOpen(false)} 
+      />
+      <AssignEmployeeModal 
+        isOpen={isAssignModalOpen} 
+        onClose={() => setIsAssignModalOpen(false)} 
+        order={selectedOrder} 
+      />
     </>
   );
 };

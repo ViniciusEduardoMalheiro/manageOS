@@ -8,16 +8,19 @@ import Input from '../components/Input';
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState(null); // Estado para o erro
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setError(null); // Limpa o erro anterior
     try {
       login(email, password);
       navigate('/');
-    } catch (error) {
-      console.error('Falha no login', error);
+    } catch (err) {
+      // Define a mensagem de erro para ser exibida
+      setError(err.message);
     }
   };
 
@@ -47,6 +50,11 @@ const Login = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
+          {error && (
+            <div className="bg-destructive/20 text-destructive text-sm font-medium p-3 rounded-md mb-4 text-center">
+                {error}
+            </div>
+          )}
           <Button type="submit" variant="primary" className="w-full mt-2">
             Entrar
           </Button>
